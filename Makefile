@@ -7,9 +7,9 @@ CC = gcc -w -O3 -I$(INC) -L$(LIB) -fpermissive
 
 all: labyrinth
 
-labyrinth: bfs.h labyrinth.cc
-	$(CXX) labyrinth.cc -o labyrinth -lOpenCL
-labyrinthDebug: labyrinth.h labyrinth.csc
-	$(DCXX) labyrinth.cc -o labyrinthDebug -lOpenCL
+labyrinth: bfs.h bfs.cc labyrinth.h labyrinth.cpp
+	$(CXX) bfs.cc labyrinth.cpp -o labyrinth -lOpenCL
+labyrinthDebug: bfs.h bfs.csc labyrinth.h labyrinth.cpp
+	$(DCXX) bfs.cc labyrinth.cpp -o labyrinthDebug -lOpenCL
 clean:
 	rm -f labyrinth labyrinthDebug
