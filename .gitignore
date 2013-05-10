@@ -11,3 +11,9 @@
 *.lai
 *.la
 *.a
+
+# linux
+*.~
+*.sw?
+
+bin/
