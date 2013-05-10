@@ -1,4 +1,4 @@
-#include "labyrinth.h"
+#include "maze.h"
 
 using namespace std;
 
@@ -9,13 +9,13 @@ using namespace std;
  * 4, 5: position of destination
  * the reset width*height entries are the data
  */
-int* RectLabyrinth::process_input() {
+int* RectMaze::process_input() {
     const int TASK_DESCRIPTION_SIZE = 6;
-    int width, height;
-    cin >> width >> height;
-    int* array = malloc((width * height + TASK_DESCRIPTION_SIZE) * sizeof(int));
-    array[0] = width;
-    array[1] = height;
+    cin >> width_ >> height_;
+    data_size_ = (width_ * height_ + TASK_DESCRIPTION_SIZE) * sizeof(int);
+    int* array = malloc((width_ * height_ + TASK_DESCRIPTION_SIZE) * sizeof(int));
+    array[0] = width_;
+    array[1] = height_;
     cin >> array[2] >> array[3] >> array[4] >> array[5];
     string line;
     /*
@@ -24,15 +24,15 @@ int* RectLabyrinth::process_input() {
      * the aim is to find a path comprising of 1s.
      */
     int count = 0;
-    for (int i = 0; i < height; i++) {
+    for (int i = 0; i < height_; i++) {
         cin >> line;
         for (string::iterator line_it = line.begin(); line_it < line.end(); line_it++) {
 	    array[TASK_DESCRIPTION_SIZE + count] = *line_it; 
         }
     }
-    for (int i = 0; i < width * height; i++) {
-
-    }
+    return array;
 }
 
-
+size_t RectMaze::get_data_size() {
+    return data_size_;
+}

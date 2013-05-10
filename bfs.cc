@@ -1,18 +1,15 @@
 #include "bfs.h"
-#include "labyrinth.h"
+#include "maze.h"
 
 #include <iostream>
 #include <string>
 
 using namespace std;
 
-int
-main(int argc, char ** argv) {
-    RectLabyrinth labyrinth;
-    labyrinth.process_input();
-    initStencil(argc, argv);
-
-    // initialize own data structures here
+/* 
+ * initialize own data structures for host.
+ */
+void initialize_data_structure(const RectMaze &maze) {
     cl_int ret;
     inArray = clCreateBuffer(context,
                              CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE,
@@ -42,7 +39,15 @@ main(int argc, char ** argv) {
                                   NULL,
                                   NULL);
  
-    runStencil();
+}
+
+int
+main(int argc, char ** argv) {
+    RectMaze maze;
+    int* input_data = maze.process_input();
+    initStencil(argc, argv);
+    initialize_data_structure(maze);
+     runStencil();
 
     if (argc > 3)
         printResult();
@@ -50,4 +55,5 @@ main(int argc, char ** argv) {
 
     return 0;
 }
+
 
