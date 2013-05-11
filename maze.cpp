@@ -10,10 +10,9 @@ using namespace std;
  * the reset width*height entries are the data
  */
 int* RectMaze::process_input() {
-    const int TASK_DESCRIPTION_SIZE = 6;
     cin >> width_ >> height_;
-    data_size_ = (width_ * height_ + TASK_DESCRIPTION_SIZE) * sizeof(int);
-    int* array = malloc((width_ * height_ + TASK_DESCRIPTION_SIZE) * sizeof(int));
+    data_size_ = width_ * height_ + TASK_DESCRIPTION_SIZE;
+    int* array = malloc(data_size_ * sizeof(int));
     array[0] = width_;
     array[1] = height_;
     cin >> array[2] >> array[3] >> array[4] >> array[5];
@@ -27,7 +26,13 @@ int* RectMaze::process_input() {
     for (int i = 0; i < height_; i++) {
         cin >> line;
         for (string::iterator line_it = line.begin(); line_it < line.end(); line_it++) {
-	    array[TASK_DESCRIPTION_SIZE + count] = *line_it; 
+            if (*line_it == 'X')
+	        array[TASK_DESCRIPTION_SIZE + count] = BLOCK;
+	    else if (*line_it == '.')
+	        array[TASK_DESCRIPTION_SIZE + count] = PASS;
+	    else
+		DEBUG("unrecognized input: %c", *line_it);
+	    count++;
         }
     }
     return array;

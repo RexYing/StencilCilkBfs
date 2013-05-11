@@ -117,6 +117,9 @@ int binsplit(__global int * array, int val, int low, int high) {
     }
 }
 
+/*
+ * a: stencil memory
+ */
 __kernel void bfsKernel(int epoch,
                         __global int * a,
                         __global int * taskTail,

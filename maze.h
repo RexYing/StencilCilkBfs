@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+#include <stdio.h>
 
 #ifndef MAZE
 #define MAZE
@@ -13,6 +14,9 @@ class RectMaze {
     int data_size_;
     
   public:
+    const int BLOCK = 0;
+    const int PASS = 1;
+    const int TASK_DESCRIPTION_SIZE = 6;
     int* process_input();
     size_t get_data_size();
 };

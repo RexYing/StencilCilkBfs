@@ -58,6 +58,7 @@ cl_uint ret_num_devices;
 
 cl_uint ret_num_platforms;
 
+/* log2 of max number of task? */
 int stencilItems;
 
 int stencilSize;
@@ -550,6 +551,7 @@ inline void initStencil(int argc, char **argv) {
 
     clFinish(command_queue);
 }
+
 inline void runStencil() {
     //std::cout << "starting..." << std::endl;
     // epoch starts at one since bfs has a double spawn
@@ -612,7 +614,7 @@ inline void runStencil() {
                              sizeof(CilkStencil),
                              &(cilkInput));
         if (ret)
-            std::cout << "set epcoh " << getError(ret) << std::endl;
+            std::cout << "set epcoh " << getError(ret) << std::endl; a: stencil memory
 #endif
         ret = clSetKernelArg(kernel,
                              1,
