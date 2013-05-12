@@ -11,7 +11,7 @@ using namespace std;
  * maze: maze object
  * inputArray: 1-D array that describes the maze task
  */
-void initialize_data_structure(const RectMaze &maze, const int* inputArray) {
+void init_data_structure(const RectMaze &maze, const int* inputArray) {
     cl_int ret;
     inArray = clCreateBuffer(context,
                              CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE,
@@ -40,19 +40,25 @@ void initialize_data_structure(const RectMaze &maze, const int* inputArray) {
                                   NULL,
                                   NULL);
  
+    if (ret)
+        std::cout << __LINE__ << ": " << getError(ret) << std::endl;
 }
 
+/*
+ * First argument: the log of the number of items.
+ */
 int
 main(int argc, char ** argv) {
     RectMaze maze;
     int* input_data = maze.process_input();
-    initStencil(argc, argv);
-    initialize_data_structure(maze, input_data);
+
+    num_stencil_items = 2 << atoi(argv[1]);
+    initStencil(argc, num_stencil_items, argv);
+    init_data_structure(maze, input_data);
 
     runStencil();
 
-    if (argc > 3)
-        printResult();
+    printResult();
     cleanStencil();
 
     return 0;

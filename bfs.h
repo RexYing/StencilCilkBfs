@@ -58,10 +58,13 @@ cl_uint ret_num_devices;
 
 cl_uint ret_num_platforms;
 
-/* log2 of max number of task? */
-int stencilItems;
+/* of max number of task? */
+int num_stencil_items;
 
 int stencilSize;
+
+/* starting point from input. */
+int start_position;
 
 int inSize;
 
@@ -179,7 +182,7 @@ inline void setCilkStencil() {
 
 inline void setHostStencil() {
     int * a = hostMem;
-    int s = stencilItems;
+    int s = num_stencil_items;
     hostInput.freeList = a;
     hostInput.taskIds = (a += s);
     hostInput.syncEpochs = (a += s);
@@ -368,14 +371,18 @@ const char * getError(int input) {
     return "unknown error code";
 }
 
-inline void initStencil(int argc, char **argv) {
-    stencilItems = 2 << atoi(argv[1]);
+/*
+ * call before runStencil
+ * num_items: number of stencil items
+ */
+inline void initStencil(int argc, int num_items, char **argv) {
+    num_stencil_items = num_items;
 
-    global_size[0] = stencilItems;
+    global_size[0] = num_stencil_items;
 
-    local_size[0] = (stencilItems > 256) ? 256 : stencilItems;
+    local_size[0] = (num_stencil_items > 256) ? 256 : num_stencil_items;
 
-    stencilSize = STENCIL_SIZE(stencilItems);
+    stencilSize = STENCIL_SIZE(num_stencil_items);
 
     inSize = 2 << atoi(argv[2]);
 
@@ -455,12 +462,6 @@ inline void initStencil(int argc, char **argv) {
                                 NULL,//hostMem,
                                 &ret);
 
-    inArray = clCreateBuffer(context,
-                             CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE,
-                             2 * inSize * sizeof(int),
-                             NULL,//hostMem,
-                             &ret);
-
     if (ret)
         std::cout << __LINE__ << ": " << getError(ret) << std::endl;
 
@@ -485,44 +486,16 @@ inline void initStencil(int argc, char **argv) {
                                          NULL,
                                          &ret);
 
-    hostArray = (int *) clEnqueueMapBuffer(command_queue,
-                                           inArray,
-                                           CL_TRUE,
-                                           CL_MAP_READ | CL_MAP_WRITE,
-                                           0,
-                                           2 * inSize * sizeof(int),
-                                           0,
-                                           NULL,
-                                           NULL,
-                                           &ret);
-
     if (ret)
         std::cout << __LINE__ << ": " << getError(ret) << std::endl;
-
-    for ( int i = 0; i < inSize; i++) {
-        int tmp = get_random() % (10 * inSize);
-        hostArray[i] = tmp;
-        hostArray[i +inSize] = tmp;
-    }
-#if 0
-    for (int i = 0; i < inSize; i += 16) {
-        for (int j =0; j < 16; j++) {
-            if ( i + j < inSize) {
-                std::cout << hostArray[i + j] << ' ';
-            }
-        }
-        std::cout << std::endl;
-    }
-#endif
+/*
     ret = clEnqueueUnmapMemObject(command_queue,
                                   inArray,
                                   hostArray,
                                   0,
                                   NULL,
                                   NULL);
-
-    if (ret)
-        std::cout << __LINE__ << ": " << getError(ret) << std::endl;
+*/
 
     clFinish(command_queue);
 
@@ -533,6 +506,7 @@ inline void initStencil(int argc, char **argv) {
     //hostInput.freeTail = (volatile int *) malloc(4);
     getTaskTail();
     getFreeTail();
+    /* for hostInput */
     setHostStencil();
     freeTaskTail();
     freeFreeTail();
@@ -562,11 +536,11 @@ inline void runStencil() {
     //std::cout << "got Tail" << std::endl;
     while (epoch[0] != -1) {
         int oldTaskTail = hostInput.taskTail[0];
-        if (oldTaskTail > (stencilItems / 2)) {
+        if (oldTaskTail > (num_stencil_items/ 2)) {
             //std::cout << "Cleaning up stencil" << std::endl;
             hostInput.taskTail = 0;
             getFreeTail();
-            hostInput.freeTail = stencilItems - 1;
+            hostInput.freeTail = num_stencil_items - 1;
             freeTaskTail();
             freeFreeTail();
             ret = clSetKernelArg(cleanKernel,
