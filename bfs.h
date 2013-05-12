@@ -488,14 +488,6 @@ inline void initStencil(int argc, int num_items, char **argv) {
 
     if (ret)
         std::cout << __LINE__ << ": " << getError(ret) << std::endl;
-/*
-    ret = clEnqueueUnmapMemObject(command_queue,
-                                  inArray,
-                                  hostArray,
-                                  0,
-                                  NULL,
-                                  NULL);
-*/
 
     clFinish(command_queue);
 
