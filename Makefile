@@ -1,6 +1,7 @@
 BIN_PATH=bin
 SRC_PATH=src
-SOURCES=bfs.cc maze.cpp
+INC_DIR=include
+SOURCES=bfs.cpp maze.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=maze
 
@@ -13,9 +14,21 @@ CC = gcc -w -O3 -I$(INC) -L$(LIB) -fpermissive
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS)
-	$(CXX) bfs.cc maze.cpp -o maze -lOpenCL
+_DEPS=maze.h dfs.h
+DEPS=$(patsubst %,$(INC_DIR)/%,$(_DEPS))
+
+ODIR=obj
+_OBJ=maze.o
+OBJ=$(patsubst %,$(ODIR)/%,$(_OBJ))
+
+$(ODIR)/%.o: %.c $(DEPS)
+	$(CXX) -c -o $@ $< -I$(INC_DIR)
+
+$(EXECUTABLE): # $(OBJ)
+	$(CXX) $(SOURCES) -o $(BIN_PATH)/$@ -lOpenCL
 mazeDebug: bfs.h bfs.csc maze.h maze.cpp
-	$(DCXX) bfs.cc maze.cpp -o mazeDebug -lOpenCL
-clean:
-	rm -f *.o maze mazeDebug $(BIN_PATH)/*
+	$(DCXX) bfs.cpp maze.cpp -o mazeDebug -lOpenCL
+
+.PHONY: clean
+clean: 
+	rm -f *.o maze mazeDebug $(BIN_PATH)/* $(ODIR)/*

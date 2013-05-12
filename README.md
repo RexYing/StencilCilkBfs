@@ -10,3 +10,4 @@ width * height matrix
 
 ======================
 
+sh run.sh <testfile>
