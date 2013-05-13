@@ -9,13 +9,15 @@ using namespace std;
  * 4, 5: position of destination
  * the reset width*height entries are the data
  */
-int* RectMaze::process_input() {
+int* RectMaze::ProcessInput() {
     cin >> width_ >> height_;
     data_size_ = width_ * height_ + TASK_DESCRIPTION_SIZE;
     int* array = malloc(data_size_ * sizeof(int));
     array[0] = width_;
     array[1] = height_;
     cin >> array[2] >> array[3] >> array[4] >> array[5];
+    start_ = pair<int, int>(array[2], array[3]);
+    dest_ = pair<int, int>(array[4], array[5]);
     string line;
     /*
      * read in "height" lines of strings, each string contains "width" characters.
@@ -38,6 +40,3 @@ int* RectMaze::process_input() {
     return array;
 }
 
-size_t RectMaze::get_data_size() {
-    return data_size_;
-}

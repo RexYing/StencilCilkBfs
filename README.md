@@ -10,4 +10,5 @@ width * height matrix
 
 ======================
 
-sh run.sh <testfile>
+to run:
+sh run.sh <testfile> (eg. sh run.sh test_basic)

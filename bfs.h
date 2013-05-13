@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <string.h>
 #include <iostream>
+#include "maze.h"
 
 #define MAX_SOURCE_SIZE (0x100000)
 #define STENCIL_ITEMS    (0x20000)
@@ -380,9 +381,9 @@ const char * getError(int input) {
 /*
  * call before runStencil
  * num_items: number of stencil items
- * input_data: an array of data to be stored in inArray/hostArray
+ * input_maze: Maze object to be solved
  */
-inline void initStencil(int argc, int num_items, int* input_data, char **argv) {
+inline void initStencil(int argc, int num_items, RectMaze input_maze, char **argv) {
     num_stencil_items = num_items;
 
     global_size[0] = num_stencil_items;
@@ -392,7 +393,7 @@ inline void initStencil(int argc, int num_items, int* input_data, char **argv) {
     stencilSize = STENCIL_SIZE(num_stencil_items);
 
     inSize = 2 << atoi(argv[2]);
-    start_position = std::pair<int, int>(input_data[3], input_data[4]);
+    start_position = input_maze.get_start();
 
     /* source code for kernel */
     const int SOURCE_COUNT = 1;
@@ -404,13 +405,14 @@ inline void initStencil(int argc, int num_items, int* input_data, char **argv) {
     lengths[0] = fread(cl_source_str, 1, MAX_SOURCE_SIZE, fp);
     fclose(fp);
     all_source_str[0] = cl_source_str;
-/*
-    fp = fopen("maze.h", "r");
+/*  // uncommenting this and changing index of lengths and all_source_str in line 405, 407 does not work
+    fp = fopen("index.h", "r");
     char *maze_header_str = new char[MAX_SOURCE_SIZE];
     lengths[0] = fread(maze_header_str, 1, MAX_SOURCE_SIZE, fp);
     fclose(fp);
     all_source_str[0] = maze_header_str;
 */
+
     /* build platform. ret stores error messages */
     cl_int ret;
 

@@ -6,7 +6,7 @@
 #define QUICKSIZE 128
 #define MERGESIZE 1024
 
-//#include "maze.h"
+//#include "index.h"
 
 typedef struct {
     // Basic Stencil
@@ -50,8 +50,7 @@ void printQueue(CilkStencil queue) {
         printf("val2s = %p\n", queue.val1s);
         printf("val3s = %p\n", queue.val1s);
         printf("val4s = %p\n", queue.val1s);
-    }
-}
+    } }
 
 int addTask(CilkStencil queue, int epoch, int taskId, int arg0, int arg1, int arg2, int arg3, int arg4) {
     int idx = atomic_add(queue.taskTail, 1);
@@ -119,6 +118,21 @@ int binsplit(__global int * array, int val, int low, int high) {
     }
 }
 
+/* constants related to the format of inArray */
+#define WEIGHT_INDEX 0;
+#define HEIGHT_INDEX 1;
+#define START_INDEX 2;
+#define DEST_INDEX 4;
+#define MATRIX_INDEX 6;
+
+int DestReached(CilkStencil* queue, __global int* input_data, int thread_id) {
+    /*if (queue -> val0s[tid] == input_data[DEST_INDEX] &&
+            queue -> val1s[tid] == input_data[DEST_INDEX])
+	return 1;
+    else
+        return 0; */
+}
+
 /*
  * a: stencil memory
  * array: inArray
@@ -128,13 +142,6 @@ __kernel void bfsKernel(int epoch,
                         __global int * taskTail,
                         __global int * freeTail,
                         __global int * array) {
-
-    /* constants related to the format of inArray */
-    const int WEIGHT_INDEX = 0;
-    const int HEIGHT_INDEX = 1;
-    const int START_INDEX = 2;
-    const int DEST_INDEX = 4;
-    const int MATRIX_INDEX = 6;
 
     int tid = get_global_id(0);
     //if (tid == 0)
@@ -154,6 +161,10 @@ __kernel void bfsKernel(int epoch,
     queue.freeTail = freeTail;
     int taskId = queue.taskIds[tid];
     // cilkbfs
+
+    if (DestReached(&queue, array, tid)) {
+        printf("done\n");
+    }
     if (taskId == 1) {
 	int syncEpoch = queue.syncEpochs[tid];
         if (syncEpoch == epoch) {
