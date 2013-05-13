@@ -1,5 +1,8 @@
 #!/bin/sh
 
+echo cleaning...
+make clean
+
 echo compiling...
 make
 

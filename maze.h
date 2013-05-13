@@ -6,6 +6,13 @@
 #ifndef MAZE
 #define MAZE
 
+/* constants related to the format of inArray */
+const int WEIGHT_INDEX = 0;
+const int HEIGHT_INDEX = 1;
+const int START_INDEX = 2;
+const int DEST_INDEX = 4;
+const int MATRIX_INDEX = 6;
+
 class RectMaze {
   
   private:

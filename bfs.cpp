@@ -53,7 +53,7 @@ main(int argc, char ** argv) {
     int* input_data = maze.process_input();
 
     num_stencil_items = 2 << atoi(argv[1]);
-    initStencil(argc, num_stencil_items, argv);
+    initStencil(argc, num_stencil_items, input_data, argv);
     init_data_structure(maze, input_data);
 
     runStencil();

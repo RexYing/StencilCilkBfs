@@ -6,6 +6,8 @@
 #define QUICKSIZE 128
 #define MERGESIZE 1024
 
+//#include "maze.h"
+
 typedef struct {
     // Basic Stencil
     __global int * taskTail;
@@ -119,12 +121,20 @@ int binsplit(__global int * array, int val, int low, int high) {
 
 /*
  * a: stencil memory
+ * array: inArray
  */
 __kernel void bfsKernel(int epoch,
                         __global int * a,
                         __global int * taskTail,
                         __global int * freeTail,
                         __global int * array) {
+
+    /* constants related to the format of inArray */
+    const int WEIGHT_INDEX = 0;
+    const int HEIGHT_INDEX = 1;
+    const int START_INDEX = 2;
+    const int DEST_INDEX = 4;
+    const int MATRIX_INDEX = 6;
 
     int tid = get_global_id(0);
     //if (tid == 0)

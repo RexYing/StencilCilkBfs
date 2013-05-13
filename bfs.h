@@ -64,7 +64,7 @@ int num_stencil_items;
 int stencilSize;
 
 /* starting point from input. */
-int start_position;
+std::pair<int, int> start_position;
 
 int inSize;
 
@@ -88,13 +88,14 @@ typedef struct {
     cl_mem taskIds;
     cl_mem syncEpochs;
     cl_mem parentIds;
-    cl_mem val0s; //low  | low1
-    cl_mem val1s; //tmp  | high1
+    cl_mem val0s; //row number of starting position
+    cl_mem val1s; //column number of starting position
     cl_mem val2s; //size | low2
     cl_mem val3s; //---  | high2
     cl_mem val4s; //---- | lowdest
 } CilkStencil;
 
+/* all tasks */
 typedef struct {
     volatile int * taskTail;
     volatile int * freeTail;
@@ -102,8 +103,8 @@ typedef struct {
     int * taskIds;
     int * syncEpochs;
     int * parentIds;
-    int * val0s; //low  | low1
-    int * val1s; //tmp  | high1
+    int * val0s; //row number of starting position
+    int * val1s; //column number of starting position
     int * val2s; //size | low2
     int * val3s; //---  | high2
     int * val4s; //---- | lowdest
@@ -180,6 +181,9 @@ inline void setCilkStencil() {
 
 }
 
+/*
+ * set host data (for all threads)
+ */
 inline void setHostStencil() {
     int * a = hostMem;
     int s = num_stencil_items;
@@ -188,9 +192,11 @@ inline void setHostStencil() {
     hostInput.syncEpochs = (a += s);
     hostInput.parentIds = (a += s);
     hostInput.val0s = (a += s);
-    hostInput.val0s[0] = 0;// low = &array[0]
+    //hostInput.val0s[0] = 0;// &array[0]
+    hostInput.val0s[0] = start_position.first;// &array[0]
     hostInput.val1s = (a += s);
-    hostInput.val1s[0] = inSize;//tmp = &array[inSize]
+    //hostInput.val1s[0] = inSize;// &array[inSize]
+    hostInput.val1s[0] = start_position.second;// &array[inSize]
     hostInput.val2s = (a += s);
     hostInput.val2s[0] = inSize;//size = inSize
     hostInput.val3s = (a += s);
@@ -374,8 +380,9 @@ const char * getError(int input) {
 /*
  * call before runStencil
  * num_items: number of stencil items
+ * input_data: an array of data to be stored in inArray/hostArray
  */
-inline void initStencil(int argc, int num_items, char **argv) {
+inline void initStencil(int argc, int num_items, int* input_data, char **argv) {
     num_stencil_items = num_items;
 
     global_size[0] = num_stencil_items;
@@ -385,15 +392,26 @@ inline void initStencil(int argc, int num_items, char **argv) {
     stencilSize = STENCIL_SIZE(num_stencil_items);
 
     inSize = 2 << atoi(argv[2]);
+    start_position = std::pair<int, int>(input_data[3], input_data[4]);
+
+    /* source code for kernel */
+    const int SOURCE_COUNT = 1;
+    char** all_source_str = new char*[SOURCE_COUNT];
+    size_t* lengths = new size_t[SOURCE_COUNT];
 
     FILE *fp = fopen("bfs.cl", "r");
-
-    char *source_str = new char[MAX_SOURCE_SIZE];
-
-    size_t source_size = fread(source_str, 1, MAX_SOURCE_SIZE, fp);
-
+    char *cl_source_str = new char[MAX_SOURCE_SIZE];
+    lengths[0] = fread(cl_source_str, 1, MAX_SOURCE_SIZE, fp);
     fclose(fp);
-
+    all_source_str[0] = cl_source_str;
+/*
+    fp = fopen("maze.h", "r");
+    char *maze_header_str = new char[MAX_SOURCE_SIZE];
+    lengths[0] = fread(maze_header_str, 1, MAX_SOURCE_SIZE, fp);
+    fclose(fp);
+    all_source_str[0] = maze_header_str;
+*/
+    /* build platform. ret stores error messages */
     cl_int ret;
 
     ret = clGetPlatformIDs(1,
@@ -437,9 +455,9 @@ inline void initStencil(int argc, int num_items, char **argv) {
         std::cout << __LINE__ << ": " << getError(ret) << std::endl;
 
     program = clCreateProgramWithSource(context,
-                                        1,
-                                        &source_str,
-                                        &source_size,
+                                        SOURCE_COUNT,      // number of sources
+                                        all_source_str,    // array of source
+                                        lengths,           // length of each source
                                         &ret);
     if (ret)
         std::cout << __LINE__ << ": " << getError(ret) << std::endl;
@@ -447,7 +465,7 @@ inline void initStencil(int argc, int num_items, char **argv) {
     ret = clBuildProgram(program,
                          0,
                          0,
-                         NULL,/*"-g",*/
+                         "-I .",  //NULL,/*"-g",*/
                          NULL,
                          NULL);
 
@@ -535,6 +553,8 @@ inline void runStencil() {
             hostInput.freeTail = num_stencil_items - 1;
             freeTaskTail();
             freeFreeTail();
+
+	    /* set arguments for function "cleanKernel" */
             ret = clSetKernelArg(cleanKernel,
                                  0,
                                  sizeof(cl_mem),
@@ -567,6 +587,8 @@ inline void runStencil() {
         //clFinish(command_queue);
         freeTaskTail();
         //std::cout << "freed Tail" << std::endl;
+	
+        /* set arguments for bfsKernel */
         ret = clSetKernelArg(kernel,
                              0,
                              sizeof(int),
