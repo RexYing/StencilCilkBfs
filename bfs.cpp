@@ -30,9 +30,7 @@ void InitDataStructure(const RectMaze &maze, const int* inputArray) {
                                            &ret);
     for (int i = 0; i < maze.get_data_size(); i++) {
         hostArray[i] = inputArray[i];
-        cout << hostArray[i] << " ";
     }
-    cout << endl;
     clEnqueueUnmapMemObject(command_queue,
                                   inArray,
                                   hostArray,

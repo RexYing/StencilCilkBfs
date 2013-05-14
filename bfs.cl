@@ -130,7 +130,12 @@ int DestReached(CilkStencil* queue, __global int* input_data, int thread_id) {
             queue -> val1s[tid] == input_data[DEST_INDEX])
 	return 1;
     else
-        return 0; */
+        return 0;*/
+    return 1;
+}
+
+int calc_index_by_row_col(int row, int col, __global int* input_data) {
+    return MATRIX_INDEX + row * input_data[WEIGHT_INDEX] + col;
 }
 
 /*
@@ -162,9 +167,16 @@ __kernel void bfsKernel(int epoch,
     int taskId = queue.taskIds[tid];
     // cilkbfs
 
+    int start_row = queue.val0s[tid];
+    int start_col = queue.val1s[tid];
     if (DestReached(&queue, array, tid)) {
-        printf("done\n");
+	queue.val4s[tid] = 38;
+	return;
     }
+    if ((start_row > 0) && (array[calc_index_by_row_col(start_row - 1, start_col, array)])) {
+        addTask(queue, epoch + 1, 1, start_row - 1, start_col, 0, 0, 38);
+    }
+
     if (taskId == 1) {
 	int syncEpoch = queue.syncEpochs[tid];
         if (syncEpoch == epoch) {

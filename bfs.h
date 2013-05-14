@@ -63,6 +63,7 @@ cl_uint ret_num_platforms;
 int num_stencil_items;
 
 int stencilSize;
+int input_array_size;
 
 /* starting point from input. */
 std::pair<int, int> start_position;
@@ -376,8 +377,7 @@ const char * getError(int input) {
             return "unknown error code";
     }
     return "unknown error code";
-}
-
+} 
 /*
  * call before runStencil
  * num_items: number of stencil items
@@ -391,6 +391,7 @@ inline void initStencil(int argc, int num_items, RectMaze input_maze, char **arg
     local_size[0] = (num_stencil_items > 256) ? 256 : num_stencil_items;
 
     stencilSize = STENCIL_SIZE(num_stencil_items);
+    input_array_size = input_maze.get_data_size();
 
     inSize = 2 << atoi(argv[2]);
     start_position = input_maze.get_start();
@@ -681,7 +682,7 @@ inline void printResult() {
                                            CL_TRUE,
                                            CL_MAP_READ | CL_MAP_WRITE,
                                            0,
-                                           2 * inSize * sizeof(int),
+                                           input_array_size * sizeof(int),
                                            0,
                                            NULL,
                                            NULL,
@@ -694,6 +695,23 @@ inline void printResult() {
         }
         std::cout << std::endl;
     }
+    for (int i = 0; i < input_array_size; i++)
+	    std::cout << hostArray[i] << '\t';
+    std::cout << std::endl;
+    hostMem = (int *) clEnqueueMapBuffer(command_queue,
+                                         stencilMem,
+                                         CL_TRUE,
+                                         CL_MAP_READ | CL_MAP_WRITE,
+                                         0,
+                                         stencilSize,
+                                         0,
+                                         NULL,
+                                         NULL,
+                                         NULL);
+
+    for (int i = 0; i < 3; i++)
+	    std::cout << hostInput.val4s[i] << " ";
+    std::cout << std::endl;
 }
 
 inline void cleanStencil() {
