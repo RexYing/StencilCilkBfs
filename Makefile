@@ -17,7 +17,7 @@ $(ODIR)/%.o: %.c $(DEPS)
 
 $(EXECUTABLE): 
 	$(CXX) $(SOURCES) -o $(BIN_PATH)/$@ -lOpenCL
-mazeDebug: bfs.h bfs.csc maze.h maze.cpp
+mazeDebug: bfs.h bfs.cpp maze.h maze.cpp
 	$(DCXX) bfs.cpp maze.cpp -o mazeDebug -lOpenCL
 
 .PHONY: clean

@@ -59,16 +59,14 @@ cl_uint ret_num_devices;
 
 cl_uint ret_num_platforms;
 
-/* of max number of task? */
+/* of max number of available threads */
 int num_stencil_items;
 
 int stencilSize;
 int input_array_size;
 
-/* starting point from input. */
-std::pair<int, int> start_position;
-
-int inSize;
+int start_vertex;
+int dest_vertex;
 
 cl_mem stencilMem;
 
@@ -194,13 +192,13 @@ inline void setHostStencil() {
     hostInput.syncEpochs = (a += s);
     hostInput.parentIds = (a += s);
     hostInput.val0s = (a += s);
-    //hostInput.val0s[0] = 0;// &array[0]
-    hostInput.val0s[0] = start_position.first;// &array[0]
+    hostInput.val0s[0] = start_vertex;
+
     hostInput.val1s = (a += s);
-    //hostInput.val1s[0] = inSize;// &array[inSize]
-    hostInput.val1s[0] = start_position.second;// &array[inSize]
+    hostInput.val1s[0] = dest_vertex;
+
     hostInput.val2s = (a += s);
-    hostInput.val2s[0] = inSize;//size = inSize
+
     hostInput.val3s = (a += s);
     hostInput.val3s[0] = 0;
     hostInput.val4s = (a += s);
@@ -214,6 +212,20 @@ inline void setHostStencil() {
     }
     hostInput.syncEpochs[0] = 0;
     hostInput.taskIds[0] = 1;
+}
+
+inline void setHostStencil2() {
+    int * a = hostMem;
+    int s = num_stencil_items;
+    hostInput.freeList = a;
+    hostInput.taskIds = (a += s);
+    hostInput.syncEpochs = (a += s);
+    hostInput.parentIds = (a += s);
+    hostInput.val0s = (a += s);
+    hostInput.val1s = (a += s);
+    hostInput.val2s = (a += s);
+    hostInput.val3s = (a += s);
+    hostInput.val4s = (a += s);
 }
 
 inline void getTaskTail() {
@@ -391,10 +403,10 @@ inline void initStencil(int argc, int num_items, RectMaze input_maze, char **arg
     local_size[0] = (num_stencil_items > 256) ? 256 : num_stencil_items;
 
     stencilSize = STENCIL_SIZE(num_stencil_items);
-    input_array_size = input_maze.get_data_size();
+    input_array_size = input_maze.total_size();
 
-    inSize = 2 << atoi(argv[2]);
-    start_position = input_maze.get_start();
+    start_vertex = input_maze.start_vertex();
+    dest_vertex = input_maze.dest_vertex();
 
     /* source code for kernel */
     const int SOURCE_COUNT = 1;
@@ -468,7 +480,7 @@ inline void initStencil(int argc, int num_items, RectMaze input_maze, char **arg
     ret = clBuildProgram(program,
                          0,
                          0,
-                         "-I .",  //NULL,/*"-g",*/
+                         NULL,/*"-g",*/
                          NULL,
                          NULL);
 
@@ -655,9 +667,9 @@ inline void runStencil() {
         //std::cout << "hostInput.taskTail[0] = "<<  hostInput.taskTail[0]<< std::endl;
         //std::cout << "epoch is" << epoch[0] << std::endl;
         if (oldTaskTail == hostInput.taskTail[0]) {
-            epoch[0]--;
+            break;
         } else {
-            epoch[0]+=2;
+            epoch[0]++;
         }
         //std::cout << "epoch is" << epoch[0] << std::endl;
     }
@@ -687,17 +699,12 @@ inline void printResult() {
                                            NULL,
                                            NULL,
                                            &ret);
-    for (int i = 0; i < inSize; i += 16) {
-        for (int j =0; j < 16; j++) {
-            if ( i + j < inSize) {
-                std::cout << hostArray[i + j] << '\t';
-            }
-        }
-        std::cout << std::endl;
-    }
+    
     for (int i = 0; i < input_array_size; i++)
-	    std::cout << hostArray[i] << '\t';
+	    std::cout << hostArray[i] << ' ';
     std::cout << std::endl;
+
+    /* debug: print hostMem */
     hostMem = (int *) clEnqueueMapBuffer(command_queue,
                                          stencilMem,
                                          CL_TRUE,
@@ -708,9 +715,12 @@ inline void printResult() {
                                          NULL,
                                          NULL,
                                          NULL);
+    setHostStencil2();
 
-    for (int i = 0; i < 3; i++)
-	    std::cout << hostInput.val4s[i] << " ";
+//    for (int i = 0; i < 10; i++)
+//	    std::cout << hostInput.val4s[i] << " ";
+    for (int i = 0; i < 20; i++)
+	    std::cout << hostInput.val0s[i] << " " << hostInput.val1s[i] << std::endl;
     std::cout << std::endl;
 }
 

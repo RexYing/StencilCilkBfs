@@ -6,23 +6,69 @@
 #ifndef MAZE
 #define MAZE
 
+/*
+ * number denoting different properties of a vertex
+ */
+#define BLOCK 0
+#define PASS 1
+#define START 2
+#define DEST 3
+
+/*
+ * Rectangular Maze stored as graph
+ */
 class RectMaze {
   
   private:
     int width_;
     int height_;
-    int data_size_;
-    std::pair<int, int> start_;
-    std::pair<int, int> dest_;
+    int vertex_size_;
+    int edge_size_;
+    /*
+     * vertex_size_ + edge_size_ + kMetadataSize
+     */
+    int total_size_;
+    /* vertex list:
+     * one vertex is represented by two numbers:
+     * the first and last index of the edge list, between which 
+     * are edges efferent from that vertex (first inclusive, last exclusive)
+     */
+    int* vertex_list_;
+    /*
+     * each number is the destination of a directed edge.
+     * if it is an undirected graph, edges will be repeated twice
+     */
+    int* edge_list_;
+    /*
+     * index of vertices representing starting point and destination.
+     */
+    int start_vertex_;
+    int dest_vertex_;
+    
+    void ProcessVertexEdgeLists(int** matrix);
+    int Linearize(int row, int col);
     
   public:
-    const int BLOCK = 0;
-    const int PASS = 1;
-    const int TASK_DESCRIPTION_SIZE = 6;
-    int* ProcessInput();
-    size_t get_data_size() { return data_size_; }
-    std::pair<int, int> get_start() { return start_; }
-    std::pair<int, int> get_dest() { return dest_; }
+    /*
+     * 2 for width/height
+     * 2 for starting/destination vertex
+     * 2 for vertex list and edge list sizes
+     */
+    const int kMetadataSize = 6;
+
+    void ProcessInput();
+    int vertex_size() { return vertex_size_; }
+    int edge_size() { return edge_size_; }
+    int total_size() { return total_size_; }
+    int start_vertex() { return start_vertex_; }
+    int dest_vertex() { return dest_vertex_; }
+    int* vertex_list() { return vertex_list_; }
+    int* edge_list() { return edge_list_; }
+
+    /*
+     * for transferring data to kernel
+     */
+    int* MetadataArray();
 };
 
 #ifdef NDEBUG
