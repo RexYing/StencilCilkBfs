@@ -195,9 +195,11 @@ inline void setHostStencil() {
     hostInput.val0s[0] = start_vertex;
 
     hostInput.val1s = (a += s);
-    hostInput.val1s[0] = dest_vertex;
+    hostInput.val1s[0] = 0;
+    //hostInput.val1s[0] = dest_vertex;
 
     hostInput.val2s = (a += s);
+    hostInput.val2s[0] = 0;
 
     hostInput.val3s = (a += s);
     hostInput.val3s[0] = 0;
@@ -717,8 +719,6 @@ inline void printResult() {
                                          NULL);
     setHostStencil2();
 
-//    for (int i = 0; i < 10; i++)
-//	    std::cout << hostInput.val4s[i] << " ";
     for (int i = 0; i < 20; i++)
 	    std::cout << hostInput.val0s[i] << " " << hostInput.val1s[i] << std::endl;
     std::cout << std::endl;
