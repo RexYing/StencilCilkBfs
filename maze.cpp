@@ -55,6 +55,11 @@ inline int RectMaze::Linearize(int row, int col) {
  * fill in vertex_list_ and edge_list_ according to the matrix information.
  */
 void RectMaze::ProcessVertexEdgeLists(int** matrix) {
+
+    /* If vertices[x][y] is not zero, it represets the vertex index of that position. */
+    int** vertices = new int*[height_];
+    for (int i = 0; i < height_; i++)
+	vertices[i] = new int[width_]();
     
     /* initialize vertex/edge list */
     vertex_list_ = new int[2 * width_ * height_];
@@ -63,39 +68,48 @@ void RectMaze::ProcessVertexEdgeLists(int** matrix) {
     int vertex_index = 0;
     int edge_index = 0;
     for (int i = 0; i < height_; i++)
+	for (int j = 0; j < width_; j++)
+	    if (matrix[i][j] != BLOCK) {
+		vertices[i][j] = vertex_index;
+		vertex_index++;
+	    }
+     
+    vertex_index = 0;
+    for (int i = 0; i < height_; i++)
 	for (int j = 0; j < width_; j++) {
             if (matrix[i][j] == BLOCK)
 		continue;
 
 	    // check if the vertex is starting point or destination
 	    if (matrix[i][j] == START)
-		start_vertex_ = vertex_index / 2;
+		start_vertex_ = vertex_index;
 	    if (matrix[i][j] == DEST)
-		dest_vertex_ = vertex_index / 2;
+		dest_vertex_ = vertex_index;
 
-	    //start index for that vertex
+	    //start edge index for that vertex
 	    vertex_list_[vertex_index] = edge_index;
 	    vertex_index++;
 
-	    if ((i > 0) && (matrix[i - 1][j] == PASS)) {
-	        edge_list_[edge_index] = Linearize(i - 1, j); // destination in edge list
+	    if ((i > 0) && (matrix[i - 1][j] != BLOCK)) {
+	        //edge_list_[edge_index] = Linearize(i - 1, j); // destination in edge list
+		edge_list_[edge_index] = vertices[i - 1][j];
 		edge_index++;
        	    }
-            if ((i < height_ - 1) && (matrix[i + 1][j] == PASS)) {
-                edge_list_[edge_index] = Linearize(i + 1, j);
+            if ((i < height_ - 1) && (matrix[i + 1][j] != BLOCK)) {
+                //edge_list_[edge_index] = Linearize(i + 1, j);
+		edge_list_[edge_index] = vertices[i + 1][j];
 		edge_index++;
 	    }
-	    if ((j > 0) && (matrix[i][j - 1] == PASS)) {
-		edge_list_[edge_index] = Linearize(i, j - 1);
+	    if ((j > 0) && (matrix[i][j - 1] != BLOCK)) {
+		//edge_list_[edge_index] = Linearize(i, j - 1);
+		edge_list_[edge_index] = vertices[i][j - 1];
 		edge_index++;
 	    }
-	    if ((j < width_ - 1) && (matrix[i][j + 1] == PASS)) {
-		edge_list_[edge_index] = Linearize(i, j + 1);
+	    if ((j < width_ - 1) && (matrix[i][j + 1] != BLOCK)) {
+		//edge_list_[edge_index] = Linearize(i, j + 1);
+		edge_list_[edge_index] = vertices[i][j + 1];
 		edge_index++;
 	    }
-
-	    vertex_list_[vertex_index] = edge_index;
-	    vertex_index++;
 	}
     /*
      * set the size of array

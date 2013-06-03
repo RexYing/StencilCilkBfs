@@ -24,6 +24,12 @@ typedef struct {
     __global int * val4s;
 } CilkStencil;
 
+typedef struct {
+    __global int * metadata;
+    __global int * v_list;
+    __global int * e_list;
+} GraphStruct;
+
 int addTask(CilkStencil queue, int epoch, int taskId, int arg0, int arg1, int arg2, int arg3, int arg4) {
     int idx = atomic_add(queue.taskTail, 1);
     idx %= get_global_size(0);
@@ -63,16 +69,12 @@ void clean(CilkStencil queue, int target) {
 #define WEIGHT_INDEX 0
 #define HEIGHT_INDEX 1
 #define START_INDEX 2
-#define DEST_INDEX 4
-#define MATRIX_INDEX 6
+#define DEST_INDEX 3
+#define V_SIZE_INDEX 4
+#define E_SIZE_INDEX 5
 
 int DestReached(CilkStencil queue, __global int* input_data, int thread_id) {
-    return (queue.val0s[thread_id] == input_data[DEST_INDEX] && 
-            queue.val1s[thread_id] == input_data[DEST_INDEX]) ? 1 : 0;
-}
-
-int calc_index_by_row_col(int row, int col, __global int* input_data) {
-    return MATRIX_INDEX + row * input_data[WEIGHT_INDEX] + col;
+    return (queue.val0s[thread_id] == input_data[DEST_INDEX] ? 1 : 0);
 }
 
 /* return 1 if the position has not been searched, otherwise 0 */
@@ -83,6 +85,18 @@ int is_new_position(int row, int col, CilkStencil queue, int thread_id) {
 	}
     }
     return 1;
+}
+
+/*
+ * extract graph information from the input array
+ */
+GraphStruct InitializeGraph(__global int * data) {
+    GraphStruct graph;
+    graph.metadata = data;
+    graph.v_list = data + 6;
+    int edge_index = 6 + data[V_SIZE_INDEX];
+    graph.e_list = data + edge_index;
+    return graph;
 }
 
 /*
@@ -117,6 +131,8 @@ __kernel void bfsKernel(int epoch,
     
     int taskId = queue.taskIds[tid];
     if (taskId == 0) return;
+
+    GraphStruct graph = InitializeGraph(array);
 
     // cilkbfs
     if (taskId == 1) {
