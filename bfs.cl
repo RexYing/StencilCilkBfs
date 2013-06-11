@@ -66,12 +66,14 @@ void clean(CilkStencil queue, int target) {
 }
 
 /* constants related to the format of inArray */
-#define WEIGHT_INDEX 0
-#define HEIGHT_INDEX 1
-#define START_INDEX 2
-#define DEST_INDEX 3
-#define V_SIZE_INDEX 4
-#define E_SIZE_INDEX 5
+#define WEIGHT_INDEX 1
+#define HEIGHT_INDEX 2
+#define START_INDEX 3
+#define DEST_INDEX 4
+#define V_SIZE_INDEX 5
+#define E_SIZE_INDEX 6
+#define ANS_INDEX 0
+#define METADATA_SIZE 7
 
 int DestReached(CilkStencil queue, __global int* input_data, int thread_id) {
     return (queue.val0s[thread_id] == input_data[DEST_INDEX] ? 1 : 0);
@@ -93,8 +95,8 @@ int is_new_position(int row, int col, CilkStencil queue, int thread_id) {
 GraphStruct InitializeGraph(__global int * data) {
     GraphStruct graph;
     graph.metadata = data;
-    graph.v_list = data + 6;
-    int edge_index = 6 + data[V_SIZE_INDEX];
+    graph.v_list = data + METADATA_SIZE;
+    int edge_index = METADATA_SIZE + data[V_SIZE_INDEX];
     graph.e_list = data + edge_index;
     return graph;
 }
@@ -134,42 +136,23 @@ __kernel void bfsKernel(int epoch,
 
     GraphStruct graph = InitializeGraph(array);
 
+    if ((array[0] == 0) || (epoch > graph.metadata[V_SIZE_INDEX]))
+	return;
+
     // cilkbfs
     if (taskId == 1) {
-        int start_row = queue.val0s[tid];
-        int start_col = queue.val1s[tid];
+	int v_index = queue.val0s[tid];
         if (DestReached(queue, array, tid)) {
-            queue.val3s[tid] = 1;
+	    if ((array[ANS_INDEX] == -1) || (array[ANS_INDEX] > epoch))
+		array[ANS_INDEX] = epoch;
             return;
         }
-        queue.val4s[tid] = 100;
-	if (start_row < 2)
-	    addTask(queue, epoch+1, 1, start_row + 1, 1, 0, 0, 0);
-	
-        /*if ((start_row > 0) && (array[calc_index_by_row_col(start_row - 1, start_col, array)]) &&
-		is_new_position(start_row - 1, start_col, queue, tid)) {
-	    //queue.val4s[tid] = 1;
-            addTask(queue, epoch + 1, 1, start_row - 1, start_col, 0, 0, 0);
-        }*/
-	/*if ((start_row < array[WEIGHT_INDEX] - 1) &&
-	        (array[calc_index_by_row_col(start_row + 1, start_col, array)]) &&
-		(is_new_position(start_row + 1, start_col, queue, tid))) {
-            //queue.val4s[tid] = 2;
-	    addTask(queue, epoch + 1, 1, start_row + 1, start_col, 0, 0, 0);
+
+	for (int i = graph.v_list[v_index]; i < graph.v_list[v_index + 1]; i++) {
+	    addTask(queue, epoch+1, 1, graph.e_list[i], 0, 0, 0, 0);
 	}
-        if ((start_col > 0) && (array[calc_index_by_row_col(start_row, start_col - 1, array)]) &&
-		is_new_position(start_row, start_col - 1, queue, tid)) {
-	    //queue.val4s[tid] = 4;
-            addTask(queue, epoch + 1, 1, start_row, start_col - 1, 0, 0, 0);
-        }
-	if ((start_col < array[HEIGHT_INDEX] - 1) &&
-	        (array[calc_index_by_row_col(start_row, start_col + 1, array)]) &&
-		(is_new_position(start_row, start_col + 1, queue, tid))) {
-            //queue.val4s[tid] = 8;
-	    addTask(queue, epoch + 1, 1, start_row, start_col + 1, 0, 0, 0);
-	}
-*/
-	//clean(queue, tid);
+
+	clean(queue, tid);
     }
     else if (taskId == 2) {
 

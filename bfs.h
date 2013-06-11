@@ -405,7 +405,7 @@ inline void initStencil(int argc, int num_items, RectMaze input_maze, char **arg
     local_size[0] = (num_stencil_items > 256) ? 256 : num_stencil_items;
 
     stencilSize = STENCIL_SIZE(num_stencil_items);
-    input_array_size = input_maze.total_size();
+    input_array_size = input_maze.total_size() + 1;
 
     start_vertex = input_maze.start_vertex();
     dest_vertex = input_maze.dest_vertex();

@@ -12,10 +12,11 @@ using namespace std;
  * inputArray: 1-D array that describes the maze task
  */
 void InitDataStructure(const RectMaze &maze) {
+    int buffer_size = maze.total_size() + 1; // one more for answer
     cl_int ret;
     inArray = clCreateBuffer(context,
                              CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE,
-                             maze.total_size() * sizeof(int),
+                             buffer_size * sizeof(int),
                              NULL,//hostMem,
                              &ret);
     hostArray = (int *) clEnqueueMapBuffer(command_queue,
@@ -23,7 +24,7 @@ void InitDataStructure(const RectMaze &maze) {
                                            CL_TRUE,
                                            CL_MAP_READ | CL_MAP_WRITE,
                                            0,
-                                           maze.total_size() * sizeof(int),
+                                           buffer_size * sizeof(int),
                                            0,
                                            NULL,
                                            NULL,
@@ -32,11 +33,12 @@ void InitDataStructure(const RectMaze &maze) {
     /*
      * fill in data to the hostArray
      */
+    hostArray[0] = -1;
     int* matadata = maze.MetadataArray();
     for (int i = 0; i < maze.kMetadataSize; i++) {
-        hostArray[i] = matadata[i];
+        hostArray[i + 1] = matadata[i];
     }
-    int index = maze.kMetadataSize;
+    int index = maze.kMetadataSize + 1;
     int* vertex_list = maze.vertex_list();
     for (int i = 0; i < maze.vertex_size(); i++) {
         hostArray[i + index] = vertex_list[i];
