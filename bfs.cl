@@ -141,15 +141,16 @@ __kernel void bfsKernel(int epoch,
 
     // cilkbfs
     if (taskId == 1) {
+	int depth = queue.val1s[tid];
 	int v_index = queue.val0s[tid];
         if (DestReached(queue, array, tid)) {
-	    if ((array[ANS_INDEX] == -1) || (array[ANS_INDEX] > epoch))
-		array[ANS_INDEX] = epoch;
+	    if ((array[ANS_INDEX] == -1) || (array[ANS_INDEX] > depth))
+		array[ANS_INDEX] = depth;
             return;
         }
 
 	for (int i = graph.v_list[v_index]; i < graph.v_list[v_index + 1]; i++) {
-	    addTask(queue, epoch+1, 1, graph.e_list[i], 0, 0, 0, 0);
+	    addTask(queue, epoch+1, 1, graph.e_list[i], depth + 1, 0, 0, 0);
 	}
 
 	clean(queue, tid);
